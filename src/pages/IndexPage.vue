@@ -12,6 +12,7 @@
         name="poslng"
         v-model.number="poslng"
         type="number"
+        step="any"
         color="primary"
         label="Longitude"
         filled
@@ -26,6 +27,7 @@
         name="poslat"
         v-model.number="poslat"
         type="number"
+        step="any"
         color="primary"
         label="Latitude"
         filled
@@ -49,7 +51,7 @@
       v-if="submitResult.length > 0 && json"
       flat
       bordered
-      class="q-mt-md bg-grey-2"
+      class="q-ml-md bg-grey-2"
     >
       <q-card-section>The nearest pharmacy is in: </q-card-section>
       <q-separator />
@@ -57,7 +59,7 @@
         <div
           class="q-px-sm q-py-xs bg-grey-8 text-white rounded-borders text-center text-no-wrap"
         >
-          <div v-if="json" class="alert alert-secondary mt-2" role="alert">
+          <div v-if="pharmacyName" class="alert alert-secondary mt-2" role="alert">
             <pre>{{ pharmacyName }}</pre>
           </div>
         </div>
@@ -83,6 +85,13 @@ export default defineComponent({
       submitResult: [],
     };
   },
+  async created() {
+    // GET request using axios with async/await
+    const response = await api.get(
+      "https://dati.comune.milano.it/dataset/7e18f0d3-b7f1-49b7-969d-da2c04131dd6/resource/1d71ca1e-a6b2-4984-8e35-a0bd9163bbca/download/ds501_elenco_farmacie_milano_final.json"
+    );
+    this.json = response.data;
+  },
   methods: {
     onSubmit(evt) {
       const formData = new FormData(evt.target);
@@ -94,46 +103,23 @@ export default defineComponent({
           poslng,
         });
       }
-
       this.submitResult = data;
     },
     getPharmacy() {
-      const $q = useQuasar();
-      api
-        .get(
-          "https://dati.comune.milano.it/dataset/7e18f0d3-b7f1-49b7-969d-da2c04131dd6/resource/1d71ca1e-a6b2-4984-8e35-a0bd9163bbca/download/ds501_elenco_farmacie_milano_final.json"
-        )
-        .then((response) => {
-          this.json = response.data;
-          var poslat = this.poslat;
-          var poslng = this.poslng;
-
-          for (var i = 0; i < this.json.length; i++) {
-            // if this location is within 0.1KM of the user, add it to the list
-            if (poslat === this.json[i].LAT && poslng === this.json[i].LNG) {
-              this.pharmacyName = this.json[i].DENOM_FARMACIA;
-              console.log(this.json[i].DENOM_FARMACIA);
-            }
-          }
-          this.$q.notify({
-            type: "positive",
-            message: "Success!",
-          });
-        })
-        .catch((e) => {
-          this.$q.notify({
-            color: "negative",
-            postition: "top",
-            message: e.toString(),
-            icon: "report_problem",
-          });
-        })
-        .finally(() => {
-          this.loading = false;
-        });
+      for (var i = 0; i < this.json.length; i++) {
+        // if this location is within 0.1KM of the user, add it to the list
+        if (this.poslat === this.json[i].LAT && this.poslng === this.json[i].LNG) {
+          this.pharmacyName = this.json[i].DENOM_FARMACIA;
+          console.log(this.json[i].DENOM_FARMACIA);
+        }
+      }
+      if (!this.pharmacyName) {
+        this.pharmacyName = "No results found!";
+      }
     },
     clearGetOutput() {
       this.json = null;
+      this.$router.go(0);
     },
   },
 });
