@@ -82,7 +82,7 @@ devServer: {
 
 Build and run the application in development mode with docker-compose:
 ```
-docker-compose up --build
+docker compose up --build
 ```
 
 We should now be able to access the application on <ins>localhost:8080<ins>. 
