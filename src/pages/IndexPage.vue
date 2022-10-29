@@ -106,9 +106,34 @@ export default defineComponent({
       this.submitResult = data;
     },
     getPharmacy() {
+      function distance(lat1, lon1, lat2, lon2, unit) {
+        var radlat1 = (Math.PI * lat1) / 180;
+        var radlat2 = (Math.PI * lat2) / 180;
+        var theta = lon1 - lon2;
+        var radtheta = (Math.PI * theta) / 180;
+        var dist =
+          Math.sin(radlat1) * Math.sin(radlat2) +
+          Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+        if (dist > 1) {
+          dist = 1;
+        }
+        dist = Math.acos(dist);
+        dist = (dist * 180) / Math.PI;
+        dist = dist * 60 * 1.1515;
+        if (unit == "K") {
+          dist = dist * 1.609344;
+        }
+        if (unit == "N") {
+          dist = dist * 0.8684;
+        }
+        return dist;
+      }
       for (var i = 0; i < this.json.length; i++) {
-        // if this location is within 0.1KM of the user, add it to the list
-        if (this.poslat === this.json[i].LAT && this.poslng === this.json[i].LNG) {
+        // if this location is within 0.1KM of the user, return the pharmacy name
+        if (
+          distance(this.poslat, this.poslng, this.json[i].LAT, this.json[i].LNG, "K") <=
+          0.1
+        ) {
           this.pharmacyName = this.json[i].DENOM_FARMACIA;
           console.log(this.json[i].DENOM_FARMACIA);
         }
