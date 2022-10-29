@@ -39,3 +39,57 @@ quasar build
 
 ### Customize the configuration
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
+
+## Build the app with Docker
+This Dockerfile splits the develop, build and production into three stages, the first stage install all dependencies in a node container, the second builds the application in a node container while the third stage only serves the artifacts with NGINX.
+
+You can build this container with:
+```
+docker build -t find-the-nearest-pharmacy .
+```
+
+and… run the container:
+```
+docker run -it -p 8000:80 --rm find-the-nearest-pharmacy
+```
+
+We should now be able to access the application on <ins>localhost:8000.<ins>
+
+## Develop with Docker-compose.yml
+While we are developing, you don’t want to rebuild the container all the time in order to see the results in your browser. To keep the reload functionality of the development mode we share the code base with the container with docker-compose. In fact, the docker-compose.yml file is fairly simple:
+```
+for local development
+version: '3.7'
+services:
+  quasar:
+    build:
+      context: .
+      target: 'develop-stage'
+    ports:
+    - '8080:8080'
+    volumes:
+    - '.:/app'
+    command: /bin/sh -c "npm install && quasar dev"
+```
+
+We build only the develop-stage since we need the source code, node, npm, the installed quasar-cli, and so on but we don’t need to build it. Moreover, the application inside the container cannot open your browser, therefore we need to set the devServer.open variable in quasar.conf.js to false:
+```
+devServer: {
+    port: 8080,
+    open: false
+},
+```
+
+Build and run the application in development mode with docker-compose:
+```
+docker-compose up --build
+```
+
+We should now be able to access the application on <ins>localhost:8080<ins>. 
+
+When making changes to the code, the application still reloads in your browser!
+
+In case you want to add another node package, just run the following command:
+```
+docker-compose exec quasar npm install <package-name>
+```
