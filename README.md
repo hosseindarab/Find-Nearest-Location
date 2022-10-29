@@ -41,6 +41,23 @@ quasar build
 See [Configuring quasar.config.js](https://v2.quasar.dev/quasar-cli-vite/quasar-config-js).
 
 ## Build the app with Docker
+```
+# develop stage
+FROM node:13.14-alpine as develop-stage
+WORKDIR /app
+COPY package*.json ./
+RUN yarn global add @quasar/cli
+COPY . .
+# build stage
+FROM develop-stage as build-stage
+RUN yarn
+RUN quasar build
+# production stage
+FROM nginx:1.17.5-alpine as production-stage
+COPY --from=build-stage /app/dist/spa /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
 This Dockerfile splits the develop, build and production into three stages, the first stage install all dependencies in a node container, the second builds the application in a node container while the third stage only serves the artifacts with NGINX.
 
 You can build this container with:
